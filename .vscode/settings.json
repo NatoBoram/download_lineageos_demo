@@ -1,0 +1,5 @@
+{
+	"dart.env": {
+		"ENABLE_FLUTTER_DESKTOP": true,
+	}
+}
