@@ -1,6 +1,10 @@
+import 'dart:convert' show json;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
+import 'package:download_lineageos_demo/device.dart' show Device;
+import 'package:http/http.dart' as http;
+import 'package:http/http.dart' show Response;
 
 void main() {
   debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
@@ -15,7 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Download LineageOS Demo'),
     );
   }
 }
@@ -30,12 +34,21 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  List<Device> devices;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  Future<List<Device>> getDevices() async {
+    Response response =
+        await http.get('https://lineageos-on-ipfs.com/ajax/devices.php');
+    var devices = (json.decode(response.body) as List)
+        .map((f) => Device.fromMap(f))
+        .toList();
+    return devices;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getDevices().then((onValue) => this.setState(() => devices = onValue));
   }
 
   @override
@@ -49,19 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
+              json.encode(devices),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
       ),
     );
   }
