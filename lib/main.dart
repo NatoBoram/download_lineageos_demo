@@ -38,8 +38,103 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+class DeviceListTile extends StatelessWidget {
+  DeviceListTile({this.device});
+
+  final Device device;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      // Device Name
+      title: Text(device.device),
+
+      // File name
+      subtitle: Text(device.filename),
+      isThreeLine: true,
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (BuildContext context) {
+            return DeviceBottomSheet(
+              device: device,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class DeviceBottomSheet extends StatelessWidget {
+  DeviceBottomSheet({this.device});
+
+  final Device device;
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomSheet(
+      builder: (BuildContext buildContext) {
+        return ListView(
+          children: <Widget>[
+            ListTile(
+              title: Text("Device"),
+              subtitle: Text(device.device),
+            ),
+            ListTile(
+              title: Text("Version"),
+              subtitle: Text(device.version),
+            ),
+            ListTile(
+              title: Text("File"),
+              subtitle: RichText(
+                text: TextSpan(
+                  text: device.filename,
+                  style: TextStyle(color: Colors.blue),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      launch(
+                        "https://mirrorbits.lineageos.org${device.filepath}",
+                      );
+                    },
+                ),
+              ),
+            ),
+            ListTile(
+              title: Text("IPFS"),
+              subtitle: RichText(
+                text: TextSpan(
+                  text: device.ipfs,
+                  style: TextStyle(color: Colors.blue),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      launch(
+                        "https://lineageos-on-ipfs.com/ipfs/${device.ipfs}/${device.filename}",
+                      );
+                    },
+                ),
+              ),
+            ),
+            ListTile(
+              title: Text("Size"),
+              subtitle: Text("${device.size}"),
+            ),
+            ListTile(
+              title: Text("Date"),
+              subtitle: Text("${device.date}"),
+            )
+          ],
+        );
+      },
+      onClosing: () {},
+    );
+  }
+}
+
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Device> devices = List<Device>();
+  final devices = List<Device>();
+  final filtered = List<Device>();
+  final controller = TextEditingController(text: "");
 
   Future<List<Device>> getDevices() async {
     Response response =
@@ -50,14 +145,28 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void setDevices() {
-    setState(() => devices.clear());
-    getDevices().then((onValue) => setState(() => devices.addAll(onValue)));
+    devices.clear();
+    filter();
+
+    getDevices().then((onValue) {
+      devices.addAll(onValue);
+      filter();
+    });
   }
 
   @override
   void initState() {
     super.initState();
     setDevices();
+  }
+
+  filter() {
+    filtered.clear();
+
+    setState(() {
+      filtered.addAll(
+          devices.where((device) => device.device.contains(controller.text)));
+    });
   }
 
   @override
@@ -73,50 +182,35 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         ],
       ),
-      body: devices.length > 0
-          ? ListView.builder(
-              itemBuilder: (BuildContext buildContext, int index) {
-                return ListTile(
-                  // Device Name
-                  title: Text(devices[index].device),
-
-                  subtitle: RichText(
-                    text: TextSpan(children: <InlineSpan>[
-                      // Filename
-                      TextSpan(
-                        text: devices[index].filename,
-                        style: TextStyle(color: Colors.blue),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            launch(
-                                "https://mirrorbits.lineageos.org${devices[index].filepath}");
-                          },
-                      ),
-
-                      TextSpan(
-                        text: "\n\n",
-                      ),
-
-                      // IPFS
-                      TextSpan(
-                        text: devices[index].ipfs,
-                        style: TextStyle(color: Colors.blue),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            launch(
-                                "https://lineageos-on-ipfs.com/ipfs/${devices[index].ipfs}/${devices[index].filename}");
-                          },
-                      ),
-                    ]),
-                  ),
-                  isThreeLine: true,
-                );
-              },
-              itemCount: devices.length,
-            )
-          : Center(
-              child: Text("There's nothing there yet."),
+      body: Column(
+        children: <Widget>[
+          TextField(
+            decoration: InputDecoration(
+              labelText: "Filter",
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 16.0,
+              ),
             ),
+            controller: controller,
+            onChanged: (text) => filter(),
+          ),
+          Expanded(
+            child: devices.length > 0
+                ? ListView.builder(
+                    itemBuilder: (BuildContext buildContext, int index) {
+                      return DeviceListTile(
+                        device: filtered[index],
+                      );
+                    },
+                    itemCount: filtered.length,
+                  )
+                : Center(
+                    child: Text("There's nothing there yet."),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
