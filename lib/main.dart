@@ -49,13 +49,15 @@ class _MyHomePageState extends State<MyHomePage> {
         .toList();
   }
 
+  void setDevices() {
+    setState(() => devices.clear());
+    getDevices().then((onValue) => setState(() => devices.addAll(onValue)));
+  }
+
   @override
   void initState() {
     super.initState();
-    getDevices().then((onValue) => this.setState(() {
-          this.devices.clear();
-          devices.addAll(onValue);
-        }));
+    setDevices();
   }
 
   @override
@@ -63,29 +65,40 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: <Widget>[
+          // Refresh Button
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: setDevices,
+          )
+        ],
       ),
-      body: ListView.builder(
-        itemBuilder: (BuildContext buildContext, int index) {
-          return ListTile(
-            // Device Name
-            title: Text(devices[index].device),
+      body: devices.length > 0
+          ? ListView.builder(
+              itemBuilder: (BuildContext buildContext, int index) {
+                return ListTile(
+                  // Device Name
+                  title: Text(devices[index].device),
 
-            // URL
-            subtitle: RichText(
-              text: TextSpan(
-                text: devices[index].filename,
-                style: TextStyle(color: Colors.blue),
-                recognizer: TapGestureRecognizer()
-                  ..onTap = () {
-                    launch("https://mirrorbits.lineageos.org" +
-                        devices[index].filepath);
-                  },
-              ),
+                  // URL
+                  subtitle: RichText(
+                    text: TextSpan(
+                      text: devices[index].filename,
+                      style: TextStyle(color: Colors.blue),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          launch("https://mirrorbits.lineageos.org" +
+                              devices[index].filepath);
+                        },
+                    ),
+                  ),
+                );
+              },
+              itemCount: devices.length,
+            )
+          : Center(
+              child: Text("There's nothing there yet."),
             ),
-          );
-        },
-        itemCount: devices.length,
-      ),
     );
   }
 }
