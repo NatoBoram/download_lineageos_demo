@@ -8,12 +8,20 @@ import 'package:download_lineageos_demo/device.dart' show Device;
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart' show Response;
 import 'package:url_launcher/url_launcher.dart' show launch;
+import 'dart:math';
+import 'dart:core';
 
 void main() {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS)
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
 
   runApp(MyApp());
+}
+
+String bibytes(int size) {
+  var i = (log(size) / log(1024)).floor();
+  return (size / pow(1024, i)).toStringAsPrecision(2) +
+      ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"][i];
 }
 
 class MyApp extends StatelessWidget {
@@ -117,7 +125,7 @@ class DeviceBottomSheet extends StatelessWidget {
             ),
             ListTile(
               title: Text("Size"),
-              subtitle: Text("${device.size}"),
+              subtitle: Text(bibytes(device.size)),
             ),
             ListTile(
               title: Text("Date"),
