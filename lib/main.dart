@@ -110,6 +110,7 @@ class DeviceBottomSheet extends StatelessWidget {
                     },
                 ),
               ),
+              isThreeLine: true,
             ),
             ListTile(
               leading: Icon(Icons.cloud_download),
@@ -126,6 +127,7 @@ class DeviceBottomSheet extends StatelessWidget {
                     },
                 ),
               ),
+              isThreeLine: true,
             ),
             ListTile(
               title: Text("Size"),
