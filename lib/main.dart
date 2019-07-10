@@ -20,7 +20,8 @@ void main() {
 
 String bibytes(int size) {
   var i = (log(size) / log(1024)).floor();
-  return (size / pow(1024, i)).toStringAsPrecision(2) +
+  return (size / pow(1024, i)).toStringAsFixed(2) +
+      " " +
       ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"][i];
 }
 
@@ -86,6 +87,7 @@ class DeviceBottomSheet extends StatelessWidget {
         return ListView(
           children: <Widget>[
             ListTile(
+              leading: Icon(Icons.phone_android),
               title: Text("Device"),
               subtitle: Text(device.device),
             ),
@@ -94,6 +96,7 @@ class DeviceBottomSheet extends StatelessWidget {
               subtitle: Text(device.version),
             ),
             ListTile(
+              leading: Icon(Icons.file_download),
               title: Text("File"),
               subtitle: RichText(
                 text: TextSpan(
@@ -109,6 +112,7 @@ class DeviceBottomSheet extends StatelessWidget {
               ),
             ),
             ListTile(
+              leading: Icon(Icons.cloud_download),
               title: Text("IPFS"),
               subtitle: RichText(
                 text: TextSpan(
@@ -199,6 +203,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 horizontal: 16.0,
                 vertical: 16.0,
               ),
+              suffixIcon: controller.text != ""
+                  ? IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        controller.clear();
+                        filter();
+                      },
+                    )
+                  : null,
             ),
             controller: controller,
             onChanged: (text) => filter(),
