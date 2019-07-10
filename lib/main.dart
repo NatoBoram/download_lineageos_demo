@@ -80,18 +80,36 @@ class _MyHomePageState extends State<MyHomePage> {
                   // Device Name
                   title: Text(devices[index].device),
 
-                  // URL
                   subtitle: RichText(
-                    text: TextSpan(
-                      text: devices[index].filename,
-                      style: TextStyle(color: Colors.blue),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          launch("https://mirrorbits.lineageos.org" +
-                              devices[index].filepath);
-                        },
-                    ),
+                    text: TextSpan(children: <InlineSpan>[
+                      // Filename
+                      TextSpan(
+                        text: devices[index].filename,
+                        style: TextStyle(color: Colors.blue),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            launch(
+                                "https://mirrorbits.lineageos.org${devices[index].filepath}");
+                          },
+                      ),
+
+                      TextSpan(
+                        text: "\n\n",
+                      ),
+
+                      // IPFS
+                      TextSpan(
+                        text: devices[index].ipfs,
+                        style: TextStyle(color: Colors.blue),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            launch(
+                                "https://lineageos-on-ipfs.com/ipfs/${devices[index].ipfs}/${devices[index].filename}");
+                          },
+                      ),
+                    ]),
                   ),
+                  isThreeLine: true,
                 );
               },
               itemCount: devices.length,
