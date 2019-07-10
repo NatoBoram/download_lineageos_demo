@@ -1,13 +1,18 @@
 import 'dart:convert' show json;
+import 'dart:io';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
 import 'package:download_lineageos_demo/device.dart' show Device;
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart' show Response;
+import 'package:url_launcher/url_launcher.dart' show launch;
 
 void main() {
-  debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS)
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+
   runApp(MyApp());
 }
 
@@ -34,21 +39,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Device> devices;
+  final List<Device> devices = List<Device>();
 
   Future<List<Device>> getDevices() async {
     Response response =
         await http.get('https://lineageos-on-ipfs.com/ajax/devices.php');
-    var devices = (json.decode(response.body) as List)
+    return (json.decode(response.body) as List)
         .map((f) => Device.fromMap(f))
         .toList();
-    return devices;
   }
 
   @override
   void initState() {
     super.initState();
-    getDevices().then((onValue) => this.setState(() => devices = onValue));
+    getDevices().then((onValue) => this.setState(() {
+          this.devices.clear();
+          devices.addAll(onValue);
+        }));
   }
 
   @override
@@ -57,15 +64,27 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              json.encode(devices),
+      body: ListView.builder(
+        itemBuilder: (BuildContext buildContext, int index) {
+          return ListTile(
+            // Device Name
+            title: Text(devices[index].device),
+
+            // URL
+            subtitle: RichText(
+              text: TextSpan(
+                text: devices[index].filename,
+                style: TextStyle(color: Colors.blue),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () {
+                    launch("https://mirrorbits.lineageos.org" +
+                        devices[index].filepath);
+                  },
+              ),
             ),
-          ],
-        ),
+          );
+        },
+        itemCount: devices.length,
       ),
     );
   }
