@@ -1,4 +1,4 @@
-package com.example.download_lineageos_demo
+package com.natoboram.download_lineageos_demo
 
 import android.os.Bundle
 
