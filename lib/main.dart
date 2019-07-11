@@ -1,10 +1,10 @@
 import 'dart:convert' show json;
 import 'dart:io';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
 import 'package:download_lineageos_demo/device.dart' show Device;
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart' show Response;
 import 'package:url_launcher/url_launcher.dart' show launch;
@@ -48,7 +48,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class DeviceListTile extends StatelessWidget {
-  DeviceListTile({this.device});
+  DeviceListTile({
+    @required this.device,
+  });
 
   final Device device;
 
@@ -75,69 +77,110 @@ class DeviceListTile extends StatelessWidget {
   }
 }
 
+class ListTileURL extends StatelessWidget {
+  ListTileURL({
+    @required this.leading,
+    @required this.title,
+    @required this.text,
+    @required this.url,
+    @required this.onLongPress,
+  });
+
+  final Widget leading;
+  final Widget title;
+  final String text;
+  final String url;
+  final void Function() onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: leading,
+      title: title,
+      subtitle: RichText(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(color: Colors.blue),
+        ),
+      ),
+      isThreeLine: true,
+      onTap: () => launch(url),
+      onLongPress: onLongPress,
+    );
+  }
+}
+
 class DeviceBottomSheet extends StatelessWidget {
-  DeviceBottomSheet({this.device});
+  DeviceBottomSheet({
+    @required this.device,
+  });
 
   final Device device;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  _onLongPress(GlobalKey<ScaffoldState> _scaffoldKey, String text) {
+    Clipboard.setData(
+      ClipboardData(
+        text: text,
+      ),
+    );
+
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
+      content: Text(
+        "Copied : $text",
+      ),
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
     return BottomSheet(
-      builder: (BuildContext buildContext) {
-        return ListView(
-          children: <Widget>[
-            ListTile(
-              leading: Icon(Icons.phone_android),
-              title: Text("Device"),
-              subtitle: Text(device.device),
-            ),
-            ListTile(
-              title: Text("Version"),
-              subtitle: Text(device.version),
-            ),
-            ListTile(
-              leading: Icon(Icons.file_download),
-              title: Text("File"),
-              subtitle: RichText(
-                text: TextSpan(
-                  text: device.filename,
-                  style: TextStyle(color: Colors.blue),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      launch(
-                        "https://mirrorbits.lineageos.org${device.filepath}",
-                      );
-                    },
-                ),
+      builder: (BuildContext context) {
+        return Scaffold(
+          key: _scaffoldKey,
+          body: ListView(
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.phone_android),
+                title: Text("Device"),
+                subtitle: Text(device.device),
+                onLongPress: () => _onLongPress(_scaffoldKey, device.device),
               ),
-              isThreeLine: true,
-            ),
-            ListTile(
-              leading: Icon(Icons.cloud_download),
-              title: Text("IPFS"),
-              subtitle: RichText(
-                text: TextSpan(
-                  text: device.ipfs,
-                  style: TextStyle(color: Colors.blue),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      launch(
-                        "https://lineageos-on-ipfs.com/ipfs/${device.ipfs}/${device.filename}",
-                      );
-                    },
-                ),
+              ListTile(
+                title: Text("Version"),
+                subtitle: Text(device.version),
+                onLongPress: () => _onLongPress(_scaffoldKey, device.version),
               ),
-              isThreeLine: true,
-            ),
-            ListTile(
-              title: Text("Size"),
-              subtitle: Text(bibytes(device.size)),
-            ),
-            ListTile(
-              title: Text("Date"),
-              subtitle: Text("${device.date}"),
-            )
-          ],
+              ListTileURL(
+                leading: Icon(Icons.file_download),
+                title: Text("File"),
+                text: device.filename,
+                url: "https://mirrorbits.lineageos.org${device.filepath}",
+                onLongPress: () => _onLongPress(_scaffoldKey,
+                    "https://mirrorbits.lineageos.org${device.filepath}"),
+              ),
+              ListTileURL(
+                leading: Icon(Icons.cloud_download),
+                title: Text("IPFS"),
+                text: device.ipfs,
+                url:
+                    "https://lineageos-on-ipfs.com/ipfs/${device.ipfs}/${device.filename}",
+                onLongPress: () => _onLongPress(_scaffoldKey, device.ipfs),
+              ),
+              ListTile(
+                title: Text("Size"),
+                subtitle: Text(bibytes(device.size)),
+                onLongPress: () =>
+                    _onLongPress(_scaffoldKey, bibytes(device.size)),
+              ),
+              ListTile(
+                title: Text("Date"),
+                subtitle: Text("${device.datetime}"),
+                onLongPress: () =>
+                    _onLongPress(_scaffoldKey, "${device.datetime}"),
+              )
+            ],
+          ),
         );
       },
       onClosing: () {},
@@ -146,9 +189,9 @@ class DeviceBottomSheet extends StatelessWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final devices = List<Device>();
-  final filtered = List<Device>();
-  final controller = TextEditingController(text: "");
+  final _devices = List<Device>();
+  final _filtered = List<Device>();
+  final _controller = TextEditingController(text: "");
 
   Future<List<Device>> getDevices() async {
     Response response =
@@ -159,11 +202,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void setDevices() {
-    devices.clear();
+    _devices.clear();
     filter();
 
     getDevices().then((onValue) {
-      devices.addAll(onValue);
+      _devices.addAll(onValue);
       filter();
     });
   }
@@ -175,12 +218,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   filter() {
-    filtered.clear();
+    _filtered.clear();
 
-    setState(() {
-      filtered.addAll(
-          devices.where((device) => device.device.contains(controller.text)));
-    });
+    setState(
+      () => _filtered.addAll(_devices.where(
+        (device) => device.device.contains(_controller.text),
+      )),
+    );
   }
 
   @override
@@ -198,36 +242,34 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Column(
         children: <Widget>[
-          TextField(
-            decoration: InputDecoration(
-              labelText: "Filter",
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 16.0,
+          ListTile(
+            title: TextField(
+              decoration: InputDecoration(
+                labelText: "Filter",
               ),
-              suffixIcon: controller.text != ""
-                  ? IconButton(
-                      icon: Icon(Icons.clear),
-                      onPressed: () {
-                        FocusScope.of(context).unfocus();
-                        controller.clear();
-                        filter();
-                      },
-                    )
-                  : null,
+              controller: _controller,
+              onChanged: (text) => filter(),
             ),
-            controller: controller,
-            onChanged: (text) => filter(),
+            trailing: _controller.text != ""
+                ? IconButton(
+                    icon: Icon(Icons.clear),
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      _controller.clear();
+                      filter();
+                    },
+                  )
+                : null,
           ),
           Expanded(
-            child: devices.length > 0
+            child: _devices.length > 0
                 ? ListView.builder(
                     itemBuilder: (BuildContext buildContext, int index) {
                       return DeviceListTile(
-                        device: filtered[index],
+                        device: _filtered[index],
                       );
                     },
-                    itemCount: filtered.length,
+                    itemCount: _filtered.length,
                   )
                 : Center(
                     child: Text("There's nothing there yet."),
