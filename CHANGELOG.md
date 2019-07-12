@@ -19,11 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Security
 
-## [0.0.1] - 2019-07-11
+## [0.0.1] - 2019-07-12
 
-### Added
-
-* Long-press actions to copy fields.
+Initial release.
 
 ## Types of changes
 
