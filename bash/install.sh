@@ -1,4 +1,4 @@
 #!/bin/sh
 
-flutter build apk --target-platform=android-arm64
-flutter install build/app/outputs/apk/release/app-release.apk
+flutter build apk --split-per-abi
+flutter install build/app/outputs/apk/release/app-arm64-v8a-release.apk
